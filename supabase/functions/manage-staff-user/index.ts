@@ -57,7 +57,16 @@ serve(async (req) => {
       });
     }
 
+    const isOwnerOrSuper = isSuperAdmin || membership?.role === "owner";
+
     if (action === "create_user") {
+      if (role === "admin" && !isOwnerOrSuper) {
+        return new Response(JSON.stringify({ error: "Only the clinic owner or a super admin can create admins" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Create auth user
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -76,7 +85,8 @@ serve(async (req) => {
       const userId = newUser.user.id;
 
       // Add user as org member with the specified role
-      const orgRole = role === "dentist" ? "dentist"
+      const orgRole = role === "admin" ? "admin"
+        : role === "dentist" ? "dentist"
         : role === "hygienist" ? "hygienist"
         : role === "assistant" ? "assistant"
         : role === "receptionist" ? "receptionist"
@@ -90,6 +100,7 @@ serve(async (req) => {
         user_id: userId,
         role: orgRole,
       });
+
 
       // Link the staff record to the new user
       if (staff_id) {
@@ -112,7 +123,7 @@ serve(async (req) => {
       // Verify the target user belongs to the same org
       const { data: targetMembership } = await supabaseAdmin
         .from("org_members")
-        .select("id")
+        .select("id, role")
         .eq("user_id", user_id)
         .eq("org_id", org_id)
         .maybeSingle();
@@ -123,6 +134,14 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      if (["owner", "admin"].includes(targetMembership.role) && !isOwnerOrSuper) {
+        return new Response(JSON.stringify({ error: "Only the clinic owner or a super admin can change an admin's password" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
 
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
         password,
@@ -162,6 +181,18 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      if (
+        action === "update_member_details" &&
+        ["owner", "admin"].includes(targetMembership.role) &&
+        !isOwnerOrSuper
+      ) {
+        return new Response(JSON.stringify({ error: "Only the clinic owner or a super admin can edit an admin's details" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
 
       if (action === "get_member_details") {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user_id);

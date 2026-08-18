@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useCreateStaff } from "@/hooks/useStaff";
 import { useOrg } from "@/hooks/useOrg";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 
-const roles = ["dentist", "assistant", "hygienist", "receptionist", "accountant", "lab_technician", "lab_assistant"];
+const baseRoles = ["dentist", "assistant", "hygienist", "receptionist", "accountant", "lab_technician", "lab_assistant"];
 
 interface AddStaffDialogProps {
   open: boolean;
@@ -21,6 +22,9 @@ interface AddStaffDialogProps {
 export function AddStaffDialog({ open, onOpenChange }: AddStaffDialogProps) {
   const createStaff = useCreateStaff();
   const { currentOrg } = useOrg();
+  const { roles: platformRoles } = useAuth();
+  const canManageAdmins = currentOrg?.role === "owner" || platformRoles.includes("super_admin");
+  const roles = canManageAdmins ? ["admin", ...baseRoles] : baseRoles;
   const [form, setForm] = useState({ full_name: "", role: "dentist", phone: "", email: "", specialty: "" });
   const [createAccount, setCreateAccount] = useState(false);
   const [password, setPassword] = useState("");

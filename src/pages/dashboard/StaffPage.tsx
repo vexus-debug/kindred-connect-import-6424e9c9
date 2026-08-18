@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 
 const roleColors: Record<string, string> = {
+  admin: "bg-secondary/10 text-secondary",
   dentist: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
   assistant: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   hygienist: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",

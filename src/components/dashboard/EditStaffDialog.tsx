@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateStaff, type StaffMember } from "@/hooks/useStaff";
 import { useOrg } from "@/hooks/useOrg";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
 
-const roles = ["dentist", "assistant", "hygienist", "receptionist", "accountant", "lab_technician", "lab_assistant"];
+const baseRoles = ["dentist", "assistant", "hygienist", "receptionist", "accountant", "lab_technician", "lab_assistant"];
 
 interface EditStaffDialogProps {
   staff: StaffMember | null;
@@ -21,6 +22,9 @@ interface EditStaffDialogProps {
 export function EditStaffDialog({ staff, open, onOpenChange }: EditStaffDialogProps) {
   const updateStaff = useUpdateStaff();
   const { currentOrg } = useOrg();
+  const { roles: platformRoles } = useAuth();
+  const canManageAdmins = currentOrg?.role === "owner" || platformRoles.includes("super_admin");
+  const roles = canManageAdmins ? ["admin", ...baseRoles] : baseRoles;
   const [form, setForm] = useState({ full_name: "", role: "dentist", phone: "", email: "", specialty: "", status: "active" });
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
