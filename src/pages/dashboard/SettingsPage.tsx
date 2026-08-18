@@ -26,6 +26,7 @@ const orgRoles = ["owner", "admin", "dentist", "assistant", "hygienist", "recept
 export default function SettingsPage() {
   const { currentOrg } = useOrg();
   const isAdmin = currentOrg?.role === "owner" || currentOrg?.role === "admin";
+  const canManageAdmins = currentOrg?.role === "owner" || platformRoles.includes("super_admin");
 
   // Clinic settings
   const { data: clinicSettings } = useClinicSettings();
@@ -370,7 +371,7 @@ export default function SettingsPage() {
                               <Select value={newRole} onValueChange={setNewRole}>
                                 <SelectTrigger className="w-36 h-8 text-xs bg-muted/30"><SelectValue placeholder="Select role" /></SelectTrigger>
                                 <SelectContent>
-                                  {orgRoles.filter((r) => r !== member.role).map((r) => (
+                                  {orgRoles.filter((r) => r !== member.role && (canManageAdmins || (r !== "owner" && r !== "admin"))).map((r) => (
                                     <SelectItem key={r} value={r} className="capitalize text-xs">{getRoleLabel(r)}</SelectItem>
                                   ))}
                                 </SelectContent>
