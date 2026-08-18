@@ -123,7 +123,7 @@ serve(async (req) => {
       // Verify the target user belongs to the same org
       const { data: targetMembership } = await supabaseAdmin
         .from("org_members")
-        .select("id")
+        .select("id, role")
         .eq("user_id", user_id)
         .eq("org_id", org_id)
         .maybeSingle();
@@ -134,6 +134,14 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      if (["owner", "admin"].includes(targetMembership.role) && !isOwnerOrSuper) {
+        return new Response(JSON.stringify({ error: "Only the clinic owner or a super admin can change an admin's password" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
 
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
         password,
