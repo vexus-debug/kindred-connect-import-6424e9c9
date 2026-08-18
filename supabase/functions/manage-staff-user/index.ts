@@ -182,6 +182,18 @@ serve(async (req) => {
         });
       }
 
+      if (
+        action === "update_member_details" &&
+        ["owner", "admin"].includes(targetMembership.role) &&
+        !isOwnerOrSuper
+      ) {
+        return new Response(JSON.stringify({ error: "Only the clinic owner or a super admin can edit an admin's details" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+
       if (action === "get_member_details") {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user_id);
         const { data: profile } = await supabaseAdmin
