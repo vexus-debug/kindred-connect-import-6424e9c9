@@ -57,7 +57,16 @@ serve(async (req) => {
       });
     }
 
+    const isOwnerOrSuper = isSuperAdmin || membership?.role === "owner";
+
     if (action === "create_user") {
+      if (role === "admin" && !isOwnerOrSuper) {
+        return new Response(JSON.stringify({ error: "Only the clinic owner or a super admin can create admins" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Create auth user
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -76,7 +85,8 @@ serve(async (req) => {
       const userId = newUser.user.id;
 
       // Add user as org member with the specified role
-      const orgRole = role === "dentist" ? "dentist"
+      const orgRole = role === "admin" ? "admin"
+        : role === "dentist" ? "dentist"
         : role === "hygienist" ? "hygienist"
         : role === "assistant" ? "assistant"
         : role === "receptionist" ? "receptionist"
@@ -90,6 +100,7 @@ serve(async (req) => {
         user_id: userId,
         role: orgRole,
       });
+
 
       // Link the staff record to the new user
       if (staff_id) {
