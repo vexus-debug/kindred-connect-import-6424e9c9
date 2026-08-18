@@ -15,6 +15,7 @@ import { useNotificationPreferences, useUpsertNotificationPreferences } from "@/
 import { useOrgMembers, useUpdateOrgMemberRole, useRemoveOrgMember } from "@/hooks/useOrgMembers";
 import { useClinicChairs, useCreateClinicChair, useUpdateClinicChair, useDeleteClinicChair } from "@/hooks/useClinicChairs";
 import { useOrg } from "@/hooks/useOrg";
+import { useAuth } from "@/hooks/useAuth";
 import { getRoleLabel } from "@/config/roleAccess";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { motion } from "framer-motion";
@@ -25,6 +26,7 @@ const orgRoles = ["owner", "admin", "dentist", "assistant", "hygienist", "recept
 
 export default function SettingsPage() {
   const { currentOrg } = useOrg();
+  const { roles: platformRoles } = useAuth();
   const isAdmin = currentOrg?.role === "owner" || currentOrg?.role === "admin";
   const canManageAdmins = currentOrg?.role === "owner" || platformRoles.includes("super_admin");
 
@@ -385,9 +387,11 @@ export default function SettingsPage() {
                             </div>
                           ) : (
                              <div className="flex items-center gap-2">
-                               <Button variant="outline" size="sm" className="h-8 text-xs border-border/50" onClick={() => setEditMemberUserId(member.user_id)}>
-                                 <Pencil className="h-3 w-3 mr-1" /> Edit Details
-                               </Button>
+                               {(canManageAdmins || !["owner", "admin"].includes(member.role)) && (
+                                 <Button variant="outline" size="sm" className="h-8 text-xs border-border/50" onClick={() => setEditMemberUserId(member.user_id)}>
+                                   <Pencil className="h-3 w-3 mr-1" /> Edit Details
+                                 </Button>
+                               )}
                                <Button variant="outline" size="sm" className="h-8 text-xs border-border/50" onClick={() => { setEditMemberId(member.id); setNewRole(""); }}>
                                  Change Role
                                </Button>
